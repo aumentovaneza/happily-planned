@@ -1,6 +1,13 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
-import { ExternalLink, ImageIcon, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+    ExternalLink,
+    ImageIcon,
+    Music,
+    Pencil,
+    Plus,
+    Trash2,
+} from 'lucide-react';
 import InspirationController from '@/actions/App/Http/Controllers/InspirationController';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,6 +59,20 @@ export default function InspirationPage({
         }
     };
 
+    // Returns the Spotify embed src for a share link, else null.
+    const spotifyEmbed = (url: string): string | null => {
+        try {
+            const u = new URL(url);
+            if (!u.hostname.endsWith('spotify.com')) return null;
+            const m = u.pathname.match(
+                /^\/(playlist|album|track|artist|episode|show)\/([A-Za-z0-9]+)/,
+            );
+            return m ? `https://open.spotify.com/embed/${m[1]}/${m[2]}` : null;
+        } catch {
+            return null;
+        }
+    };
+
     return (
         <>
             <Head title="Inspiration" />
@@ -62,8 +83,8 @@ export default function InspirationPage({
                             Inspiration
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Your Pinterest boards and TikTok / Instagram links, all
-                            in one place.
+                            Your Pinterest boards, TikTok / Instagram links, and
+                            Spotify playlists, all in one place.
                         </p>
                     </div>
                     <Button onClick={() => setCreating(true)}>
@@ -75,77 +96,114 @@ export default function InspirationPage({
                     <Card>
                         <CardContent className="py-10 text-center text-sm text-muted-foreground">
                             No inspiration saved yet. Paste a Pinterest board,
-                            TikTok, or Instagram link to get started.
+                            TikTok, Instagram, or Spotify playlist link to get
+                            started.
                         </CardContent>
                     </Card>
                 ) : (
                     groups.map(([category, items]) => (
                         <div key={category} className="space-y-3">
-                            <h2 className="text-sm font-semibold tracking-wide uppercase text-muted-foreground">
+                            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                                 {category}
                             </h2>
                             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                                {items.map((item) => (
-                                    <Card key={item.id} className="overflow-hidden py-0">
-                                        <a
-                                            href={item.url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="block aspect-video bg-muted"
+                                {items.map((item) => {
+                                    const embed = spotifyEmbed(item.url);
+                                    return (
+                                        <Card
+                                            key={item.id}
+                                            className="overflow-hidden py-0"
                                         >
-                                            {item.thumbnail_url ? (
-                                                <img
-                                                    src={item.thumbnail_url}
-                                                    alt={item.title}
-                                                    className="h-full w-full object-cover"
+                                            {embed ? (
+                                                <iframe
+                                                    src={embed}
+                                                    title={item.title}
+                                                    loading="lazy"
+                                                    className="w-full"
+                                                    height={152}
+                                                    style={{ border: 0 }}
+                                                    allow="encrypted-media; clipboard-write; fullscreen; picture-in-picture"
                                                 />
                                             ) : (
-                                                <div className="flex h-full items-center justify-center text-muted-foreground">
-                                                    <ImageIcon className="size-8" />
-                                                </div>
-                                            )}
-                                        </a>
-                                        <CardContent className="space-y-1 p-3">
-                                            <div className="flex items-start justify-between gap-2">
                                                 <a
                                                     href={item.url}
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    className="font-medium hover:underline"
+                                                    className="block aspect-video bg-muted"
                                                 >
-                                                    {item.title}
+                                                    {item.thumbnail_url ? (
+                                                        <img
+                                                            src={
+                                                                item.thumbnail_url
+                                                            }
+                                                            alt={item.title}
+                                                            className="h-full w-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-full items-center justify-center text-muted-foreground">
+                                                            <ImageIcon className="size-8" />
+                                                        </div>
+                                                    )}
                                                 </a>
-                                                <div className="flex shrink-0">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="size-7"
-                                                        onClick={() => setEditing(item)}
-                                                    >
-                                                        <Pencil className="size-3.5" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="size-7"
-                                                        onClick={() => remove(item)}
-                                                    >
-                                                        <Trash2 className="size-3.5" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                            <Badge variant="outline" className="gap-1">
-                                                <ExternalLink className="size-3" />
-                                                {host(item.url)}
-                                            </Badge>
-                                            {item.notes && (
-                                                <p className="text-xs text-muted-foreground">
-                                                    {item.notes}
-                                                </p>
                                             )}
-                                        </CardContent>
-                                    </Card>
-                                ))}
+                                            <CardContent className="space-y-1 p-3">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <a
+                                                        href={item.url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="font-medium hover:underline"
+                                                    >
+                                                        {item.title}
+                                                    </a>
+                                                    <div className="flex shrink-0">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="size-7"
+                                                            onClick={() =>
+                                                                setEditing(item)
+                                                            }
+                                                        >
+                                                            <Pencil className="size-3.5" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="size-7"
+                                                            onClick={() =>
+                                                                remove(item)
+                                                            }
+                                                        >
+                                                            <Trash2 className="size-3.5" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                                <Badge
+                                                    variant="outline"
+                                                    className="gap-1"
+                                                >
+                                                    {embed ? (
+                                                        <>
+                                                            <Music className="size-3" />
+                                                            Spotify
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <ExternalLink className="size-3" />
+                                                            {host(item.url)}
+                                                        </>
+                                                    )}
+                                                </Badge>
+                                                {item.notes && (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {item.notes}
+                                                    </p>
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    );
+                                })}
                             </div>
                         </div>
                     ))
@@ -208,7 +266,9 @@ function InspirationDialog({
                         <Input
                             id="title"
                             value={form.data.title}
-                            onChange={(e) => form.setData('title', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('title', e.target.value)
+                            }
                             required
                             autoFocus
                         />
@@ -217,18 +277,26 @@ function InspirationDialog({
                         <Label htmlFor="url">URL</Label>
                         <Input
                             id="url"
-                            placeholder="https://pinterest.com/…"
+                            placeholder="https://pinterest.com/… or a Spotify playlist link"
                             value={form.data.url}
-                            onChange={(e) => form.setData('url', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('url', e.target.value)
+                            }
                             required
                         />
+                        <p className="text-xs text-muted-foreground">
+                            Paste a Spotify playlist link and it plays right
+                            here. Log in to Spotify in this browser for
+                            full-length tracks (otherwise you'll hear 30-second
+                            previews).
+                        </p>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="grid gap-2">
                             <Label htmlFor="category">Category</Label>
                             <Input
                                 id="category"
-                                placeholder="Flowers, Dress…"
+                                placeholder="Flowers, Dress, Music…"
                                 value={form.data.category}
                                 onChange={(e) =>
                                     form.setData('category', e.target.value)
@@ -244,7 +312,10 @@ function InspirationDialog({
                                 placeholder="https://"
                                 value={form.data.thumbnail_url}
                                 onChange={(e) =>
-                                    form.setData('thumbnail_url', e.target.value)
+                                    form.setData(
+                                        'thumbnail_url',
+                                        e.target.value,
+                                    )
                                 }
                             />
                         </div>
@@ -254,12 +325,18 @@ function InspirationDialog({
                         <Textarea
                             id="notes"
                             value={form.data.notes}
-                            onChange={(e) => form.setData('notes', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('notes', e.target.value)
+                            }
                         />
                     </div>
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                        >
                             Cancel
                         </Button>
                         <Button type="submit" disabled={form.processing}>
