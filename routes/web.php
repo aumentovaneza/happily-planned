@@ -18,8 +18,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', fn () => redirect()->route(Auth::check() ? 'dashboard' : 'login'))
     ->name('home');
 
-// Single shared household — the auth + verified middleware is the only gate (no policies).
-Route::middleware(['auth', 'verified'])->group(function () {
+// Single shared household — the auth middleware is the only gate (no policies).
+Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Budget — running-cost spreadsheet, what-if sandbox, and AI advisor.
