@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    // Claude (Anthropic) powers the optional Budget Advisor and drinks AI tip.
+    // Leave ANTHROPIC_API_KEY unset to run the app fully without AI.
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-opus-5-5'),
+    ],
+
 ];
