@@ -1,0 +1,47 @@
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    environment:
+      APP_NAME: "Happily Planned"
+      APP_ENV: local
+      # Local development key. Generate your own with `php artisan key:generate --show`.
+      APP_KEY: "base64:ujnvR08HwMe/mi/6hZwpjGW3shg0cfMNTP/P7XhjxeU="
+      APP_DEBUG: "true"
+      APP_URL: "http://localhost:8000"
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_DATABASE: happily_planned
+      DB_USERNAME: happily
+      DB_PASSWORD: secret
+      # Optional — set your Anthropic key to enable the Budget Advisor & drinks AI tip.
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: happily_planned
+      MYSQL_USER: happily
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      # Host 3307 -> container 3306, so it won't clash with a local MySQL.
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "happily", "-psecret"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  mysql-data:

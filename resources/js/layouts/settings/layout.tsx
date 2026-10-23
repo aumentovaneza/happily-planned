@@ -8,9 +8,15 @@ import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
+import { edit as editWedding } from '@/routes/wedding';
 import type { NavItem } from '@/types';
 
 const sidebarNavItems: NavItem[] = [
+    {
+        title: 'Wedding',
+        href: editWedding(),
+        icon: null,
+    },
     {
         title: 'Profile',
         href: edit(),

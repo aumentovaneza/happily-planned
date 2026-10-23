@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Controllers\Settings\WeddingController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
 
@@ -10,6 +11,11 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('settings/wedding', [WeddingController::class, 'edit'])->name('wedding.edit');
+    Route::patch('settings/wedding', [WeddingController::class, 'update'])->name('wedding.update');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
