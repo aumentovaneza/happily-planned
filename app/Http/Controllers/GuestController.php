@@ -18,6 +18,14 @@ class GuestController extends Controller
     {
         $guests = Guest::query()->orderBy('name')->get();
 
+        // Response-rate breakdown is based on invited guests only.
+        $invited = $guests->where('invited', true);
+        $invitedCount = $invited->count();
+        $invitedConfirmed = $invited->where('rsvp_status', RsvpStatus::Confirmed)->count();
+        $invitedDeclined = $invited->where('rsvp_status', RsvpStatus::Declined)->count();
+        $invitedPending = $invited->where('rsvp_status', RsvpStatus::Pending)->count();
+        $responded = $invitedConfirmed + $invitedDeclined;
+
         return Inertia::render('guests/index', [
             'guests' => $guests->map(fn (Guest $guest): array => [
                 'id' => $guest->id,
@@ -41,6 +49,10 @@ class GuestController extends Controller
                 'headcount' => $guests
                     ->where('rsvp_status', RsvpStatus::Confirmed)
                     ->sum(fn (Guest $guest) => $guest->headcount()),
+                'responseRate' => $invitedCount > 0 ? (int) round($responded / $invitedCount * 100) : 0,
+                'invitedConfirmed' => $invitedConfirmed,
+                'invitedDeclined' => $invitedDeclined,
+                'invitedPending' => $invitedPending,
             ],
             'sideOptions' => GuestSide::options(),
             'rsvpOptions' => RsvpStatus::options(),

@@ -1,6 +1,15 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+    CalendarCheck,
+    Clock,
+    Pencil,
+    Plus,
+    Trash2,
+    UsersRound,
+    XCircle,
+    type LucideIcon,
+} from 'lucide-react';
 import GuestController from '@/actions/App/Http/Controllers/GuestController';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -41,6 +50,10 @@ type Stats = {
     declined: number;
     pending: number;
     headcount: number;
+    responseRate: number;
+    invitedConfirmed: number;
+    invitedDeclined: number;
+    invitedPending: number;
 };
 
 type Props = {
@@ -109,13 +122,23 @@ export default function GuestsPage({
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-                    <Stat label="Attending" value={stats.headcount} accent />
-                    <Stat label="Confirmed" value={stats.confirmed} />
-                    <Stat label="Pending" value={stats.pending} />
-                    <Stat label="Declined" value={stats.declined} />
-                    <Stat label="Invited" value={stats.invited} />
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                    <Stat
+                        label="Total Attending"
+                        value={stats.headcount}
+                        icon={UsersRound}
+                        accent
+                    />
+                    <Stat
+                        label="Confirmed"
+                        value={stats.confirmed}
+                        icon={CalendarCheck}
+                    />
+                    <Stat label="Pending" value={stats.pending} icon={Clock} />
+                    <Stat label="Declined" value={stats.declined} icon={XCircle} />
                 </div>
+
+                <ResponseRate stats={stats} />
 
                 <Card>
                     <CardContent className="pt-6">
@@ -238,17 +261,75 @@ export default function GuestsPage({
 function Stat({
     label,
     value,
+    icon: Icon,
     accent,
 }: {
     label: string;
     value: number;
+    icon: LucideIcon;
     accent?: boolean;
 }) {
     return (
         <Card className={accent ? 'border-primary/40' : undefined}>
+            <CardContent className="flex items-center gap-4 pt-6">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="size-5" />
+                </div>
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                        {label}
+                    </p>
+                    <p className="text-2xl font-bold">{value}</p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function ResponseRate({ stats }: { stats: Stats }) {
+    const base = stats.invited;
+    const pct = (n: number) => (base > 0 ? (n / base) * 100 : 0);
+
+    const segments = [
+        { label: 'Confirmed', value: stats.invitedConfirmed, bar: 'bg-primary' },
+        { label: 'Declined', value: stats.invitedDeclined, bar: 'bg-chart-2' },
+        {
+            label: 'Pending',
+            value: stats.invitedPending,
+            bar: 'bg-muted-foreground/40',
+        },
+    ];
+
+    return (
+        <Card>
             <CardContent className="pt-6">
-                <p className="text-xs font-medium text-muted-foreground">{label}</p>
-                <p className="mt-1 text-2xl font-bold">{value}</p>
+                <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">Response Rate</p>
+                    <p className="text-sm font-semibold">{stats.responseRate}%</p>
+                </div>
+                <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-muted">
+                    {segments.map((s) => (
+                        <div
+                            key={s.label}
+                            className={s.bar}
+                            style={{ width: `${pct(s.value)}%` }}
+                        />
+                    ))}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-4">
+                    {segments.map((s) => (
+                        <span
+                            key={s.label}
+                            className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                        >
+                            <span
+                                className={`size-2 rounded-full ${s.bar}`}
+                                aria-hidden
+                            />
+                            {s.label}
+                        </span>
+                    ))}
+                </div>
             </CardContent>
         </Card>
     );
